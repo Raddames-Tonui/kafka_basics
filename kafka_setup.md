@@ -29,3 +29,10 @@ This command creates a Kafka topic called payments with 1 partition and no repli
 
 See the topics
  docker exec -it kafka kafka-topics.sh --bootstrap-server localhost:9092 --list
+
+
+
+ go mod init payment-tracker
+go get github.com/gin-gonic/gin
+go get github.com/segmentio/kafka-go
+go get github.com/lib/pq
