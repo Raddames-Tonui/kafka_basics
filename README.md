@@ -27,15 +27,33 @@ kafka/
     └── init.sql                # SQL for creating payment_events table
 
 
-cmd/producer/main.go: Runs an HTTP server (e.g. POST /payments) that sends events to Kafka.
+docker exec -it kafka-postgres psql -U postgres -d payments_events
+psql (15.12 (Debian 15.12-1.pgdg120+1))
+Type "help" for help.
 
-cmd/consumer/main.go: Kafka consumer that listens to payments topic and writes to PostgreSQL.
+payments_events=# 
 
-docker-compose.yml: Spins up Kafka (Bitnami or Confluent), PostgreSQL, and optionally Zookeeper.
 
-scripts/init.sql: Initializes payment_events table.
+docker compose up --build -d
 
-internal/models/: Central place for event structs.
+docker compose up
 
-config/: Loads .env or hardcoded config for ports and credentials.
+docker-compose logs -f kafka
 
+go run cmd/producer/main.go
+
+go run cmd/consumer/main.go
+
+docker exec -it kafka /bin/bash
+
+/opt/bitnami/kafka/bin/kafka-topics.sh --create --topic payment_events --bootstrap-server localhost:9092 --partitions 1 --replication-factor 1
+
+/opt/bitnami/kafka/bin/kafka-topics.sh --list --bootstrap-server localhost:9092
+
+
+ kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic payment_events --from-beginning
+
+{"user_id":"12345","amount":100,"status":"success"}
+{"user_id":"12345","amount":100,"status":"success"}
+
+kafka-consumer-groups.sh --bootstrap-server localhost:9092 --group payment-consumer --reset-offsets --topic payment_events --to-earliest --execute
